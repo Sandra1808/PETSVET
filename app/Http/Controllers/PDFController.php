@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Cita;
-use App\Models\Historial;
-use App\Models\Mascota;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PDFController extends Controller
@@ -33,6 +30,33 @@ class PDFController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.historiales', compact('historiales'));
         return $pdf->download('historiales_mascota_' . $mascota_id . '.pdf');
     }
+
+    public function generarInforme($id)  
+{  
+    // Buscar el informe con todas las relaciones necesarias  
+    $informe = \App\Models\Informe::with([  
+        'historial.mascota.propietario',  
+        'historial.veterinario',   
+        'cita'  
+    ])->findOrFail($id);  
+      
+    // Usar el historial del informe para el template  
+    $historial = $informe->historial;
+    
+    //Datos especificos del informe
+    $historial->procedimientos = $informe->procedimientos;  
+    $historial->diagnostico = $informe->diagnostico;  
+    $historial->tratamiento = $informe->tratamiento;  
+    $historial->medicamentos = $informe->medicamentos;  
+    $historial->recomendaciones = $informe->recomendaciones;  
+    $historial->observaciones = $informe->observaciones;  
+    $historial->proxima_cita = $informe->proxima_cita;
+      
+    // Generar el PDF usando el template existente  
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.historial_informe', compact('historial'));  
+      
+    return $pdf->download('informe_' . $id . '.pdf');  
+}
 
     public function generarHistorialPDF($id)
     {

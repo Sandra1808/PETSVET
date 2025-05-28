@@ -18,7 +18,6 @@
         }
         .custom-header {
             background: #FFE5D0;
-            padding: 35px 0 20px 0;
             display: flex;
             align-items: center;
             justify-content: space-between;

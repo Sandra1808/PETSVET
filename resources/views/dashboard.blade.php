@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="container mt-4">
+    <div class="container" ">
         <!-- Navegación -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow">
             <div class="container-fluid">
@@ -27,10 +27,9 @@
         </nav>
 
         <!-- Contenido Principal -->
-        <div class="text-center mt-5">
+        <div class="text-center">
             @if(Auth::check())
                 <h2 class="fw-bold text-primary">Bienvenido, {{ Auth::user()->name }} 👋</h2>
-                <p class="text-muted">Gestiona tus mascotas y citas fácilmente.</p>
 
                 <!-- Secciones del usuario -->
                 <div class="row mt-4">
@@ -48,8 +47,9 @@
             @else
                 <h1 class="fw-bold text-danger">Bienvenido a PETSVET 🐾</h1>
                 <p class="text-muted">Cuidamos de tu mascota con amor.</p>
-
-                <img src="{{ asset('img/veterinarios.jpg') }}" class="img-fluid rounded shadow-lg mt-4" alt="Veterinarios atendiendo mascotas">
+                <div class="text-center">
+                    <img src="{{ asset('img/veterinarios.jpg') }}" class="img-fluid rounded shadow-lg"  alt="Veterinarios atendiendo mascotas">
+                </div>
             @endif
         </div>
     </div>

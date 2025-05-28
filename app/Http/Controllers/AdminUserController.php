@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Cita;
+use App\Models\Mascota;
 
 class AdminUserController extends Controller
 {
@@ -23,6 +25,15 @@ class AdminUserController extends Controller
         $mascotas = \App\Models\Mascota::with('propietario')->get();
         $tab = 'personal';
         return view('admin.index', compact('veterinarios', 'mascotas', 'tab'));
+    }
+
+    public function index()
+    {
+        $citas = Cita::with(['veterinario', 'mascota.propietario', 'informes'])->get();
+        $veterinarios = User::where('puesto', 'veterinario')->get();
+        $mascotas = Mascota::with('propietario')->get();
+
+        return view('admin.index', compact('citas', 'veterinarios', 'mascotas'));
     }
 
     public function store(Request $request)
@@ -74,4 +85,45 @@ class AdminUserController extends Controller
         $pw = $user->password_visible ? Crypt::decryptString($user->password_visible) : 'No disponible';
         return back()->with('pw_real', $pw)->with('pw_user_id', $user->id);
     }
-} 
+
+    public function propietariosAutocomplete(Request $request)
+    {
+        $search = $request->q;
+        $propietarios = \App\Models\User::where('role', 'propietario')
+            ->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%")
+                  ->orWhere('dni', 'like', "%$search%")
+                  ->orWhere('codigo_personal', 'like', "%$search%")
+                  ;
+            })
+            ->select('id', 'name')
+            ->limit(20)
+            ->get();
+        $results = $propietarios->map(function($p) {
+            return ['id' => $p->id, 'text' => $p->name];
+        });
+        return response()->json($results);
+    }
+
+    public function mascotasByPropietario($id)
+    {
+        $mascotas = \App\Models\Mascota::where('propietario_id', $id)->select('id', 'nombre')->get();
+        return response()->json($mascotas);
+    }
+
+    public function citaDetalle($id)
+    {
+        $cita = \App\Models\Cita::with(['mascota.propietario', 'veterinario'])
+            ->findOrFail($id);
+        return response()->json([
+            'mascota_nombre' => $cita->mascota->nombre ?? '',
+            'propietario_nombre' => $cita->mascota->propietario->name ?? '',
+            'veterinario_id' => $cita->veterinario_id,
+            'motivo' => $cita->motivo,
+            'fecha' => $cita->fecha,
+            'hora' => $cita->hora,
+            'estado' => $cita->estado,
+        ]);
+    }
+}

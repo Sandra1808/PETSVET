@@ -38,13 +38,26 @@
                     <div class="col ps-3">
                         <div class="fw-bold" style="font-size: 1.2rem;"><?php echo e($mascota->nombre); ?></div>
                         <div><?php echo e($mascota->sexo); ?>, <?php echo e($mascota->calcularEdad()); ?>, Nº Microchip: <?php echo e($mascota->microchip ?? '0000000000'); ?></div>
-                        <div class="mt-2">
-                            <a href="<?php echo e(route('mascotas.edit', $mascota->id)); ?>">Editar mi perfil</a>
+                        <div class="mt-2">  
+                            <?php if($mascota->proximaCita()): ?>  
+                                <span class="me-3 text-info">  
+                                    <strong>Mi próxima cita:</strong> <?php echo e($mascota->proximaCita()->fecha); ?> <?php echo e($mascota->proximaCita()->hora); ?>  
+                                </span>  
+                            <?php endif; ?>  
+                              
+                            <?php if($mascota->proximaVacuna()): ?>  
+                                <span class="me-3 text-warning">  
+                                    <strong>Mi próxima vacuna:</strong> <?php echo e($mascota->proximaVacuna()); ?>  
+                                </span>  
+                            <?php endif; ?>  
+                              
+                            <a href="<?php echo e(route('mascotas.edit', $mascota->id)); ?>">Editar mi perfil</a>  
                         </div>
                     </div>
                 </div>
             </div>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+      
             <?php $__currentLoopData = $mascotas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mascota): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="modal fade" id="modalHistorialMascota<?php echo e($mascota->id); ?>" tabindex="-1">
                     <div class="modal-dialog modal-lg">
@@ -150,6 +163,7 @@
                                             <td><?php echo e($informe->cita->motivo ?? '-'); ?></td>
                                             <td>
                                                 <button type="button" class="btn btn-info btn-sm btn-ver-detalle-informe" data-informe-id="<?php echo e($informe->id); ?>">Ver detalles</button>
+                                                <a href="<?php echo e(route('pdf.informe', ['id' => $informe->id])); ?>" class="btn btn-secondary btn-sm" target="_blank">Imprimir</a>  
                                             </td>
                                         </tr>
                                         <tr id="detalle-informe-<?php echo e($informe->id); ?>" style="display:none; background:#FFF7E6;">
@@ -184,6 +198,65 @@
         <div id="section-citas" class="section-propietario" style="display:none;">
             <div class="mb-4">
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalSolicitarCita">Nueva cita</button>
+            </div>
+            <!-- Modal Solicitar Cita -->
+            <div class="modal fade" id="modalSolicitarCita" tabindex="-1" aria-labelledby="modalSolicitarCitaLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalSolicitarCitaLabel">Solicitar cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <form method="POST" action="<?php echo e(route('citas.store')); ?>">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="estado" value="Pendiente">
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label for="mascota_id" class="form-label">Mascota</label>
+                        <select id="mascota_id" name="mascota_id" class="form-control" required>
+                          <option value="">Selecciona una mascota</option>
+                          <?php $__currentLoopData = Auth::user()->mascotas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mascota): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($mascota->id); ?>"><?php echo e($mascota->nombre); ?></option>
+                          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo</label>
+                        <select id="motivo" name="motivo" class="form-control" required>
+                          <option value="">Selecciona un motivo</option>
+                          <option value="Primera consulta">Primera consulta</option>
+                          <option value="Revisión">Revisión</option>
+                          <option value="Vacunación">Vacunación</option>
+                          <option value="Cirugía">Cirugía</option>
+                          <option value="Pruebas">Pruebas</option>
+                          <option value="Otros">Otros</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="veterinario_id" class="form-label">Veterinario</label>
+                        <select id="veterinario_id" name="veterinario_id" class="form-control" required>
+                          <option value="">Selecciona un veterinario</option>
+                          <?php $__currentLoopData = \App\Models\User::where('role', 'veterinario')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vet): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($vet->id); ?>"><?php echo e($vet->name); ?></option>
+                          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="fecha" class="form-label">Fecha</label>
+                        <input type="date" id="fecha" name="fecha" class="form-control" required>
+                      </div>
+                      <div class="mb-3">
+                        <label for="hora" class="form-label">Hora</label>
+                        <input type="time" id="hora" name="hora" class="form-control" required min="08:00" max="22:00">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-primary">Solicitar cita</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
             <div id="propietario-calendar"></div>
         </div>

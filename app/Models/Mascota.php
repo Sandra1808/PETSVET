@@ -58,12 +58,13 @@ class Mascota extends Model
     }
 
     /**
-     * Devuelve la fecha de la próxima vacuna (anual) según el último historial de tipo Vacunación.
+     * Devuelve la fecha de la próxima vacuna (anual) según la fecha de la última vacuna.
      */
     public function proximaVacuna()
     {
-        $ultimaVacuna = $this->historiales()
-            ->where('tipo', 'Vacunación')
+        $ultimaVacuna = $this->citas()
+            ->where('motivo', 'Vacunación')
+            ->where('estado', 'Confirmada')
             ->orderByDesc('fecha')
             ->first();
         if ($ultimaVacuna) {
@@ -73,12 +74,13 @@ class Mascota extends Model
     }
 
     /**
-     * Devuelve la fecha de la próxima desparasitación (trimestral) según el último historial de tipo Desparasitación.
+     * Devuelve la fecha de la próxima desparasitación (trimestral) según la fecha de la última desparasitación.
      */
     public function proximaDesparasitacion()
     {
-        $ultimaDesparasitacion = $this->historiales()
-            ->where('tipo', 'Desparasitación')
+        $ultimaDesparasitacion = $this->citas()
+            ->where('motivo', 'Desparasitación')
+            ->where('estado', 'Confirmada')
             ->orderByDesc('fecha')
             ->first();
         if ($ultimaDesparasitacion) {

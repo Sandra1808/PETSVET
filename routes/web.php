@@ -90,6 +90,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/citas/json', [App\Http\Controllers\CitaController::class, 'adminCitasJson'])->name('admin.citas.json');
     Route::post('/admin/citas/{cita}/confirmar', [App\Http\Controllers\CitaController::class, 'confirmar'])->name('admin.citas.confirmar');
     Route::post('/admin/citas/{cita}/rechazar', [App\Http\Controllers\CitaController::class, 'rechazar'])->name('admin.citas.rechazar');
+
+    // Rutas AJAX para Select2 y detalles de cita
+    Route::get('/admin/propietarios/autocomplete', [AdminUserController::class, 'propietariosAutocomplete'])->name('admin.propietarios.autocomplete');
+    Route::get('/admin/mascotas/by-propietario/{id}', [AdminUserController::class, 'mascotasByPropietario'])->name('admin.mascotas.byPropietario');
+    Route::get('/admin/citas/{id}/detalle', [AdminUserController::class, 'citaDetalle'])->name('admin.citas.detalle');
 });
 
 // Login exclusivo para administración
@@ -105,6 +110,10 @@ Route::get('/veterinario', [App\Http\Controllers\VeterinarioController::class, '
 Auth::routes();
 
 Route::get('/historiales/pdf/{id}', [App\Http\Controllers\PDFController::class, 'generarHistorialesPDF'])->name('pdf.historiales');
+Route::get('/pdf/informe/{id}', [App\Http\Controllers\PDFController::class, 'generarInforme'])->name('pdf.informe');
+Route::get('/pdf/informe/{id}', [App\Http\Controllers\PDFController::class, 'generarInforme'])->name('pdf.informe');
+
+
 
 Route::post('/citas/{id}/informe', [App\Http\Controllers\CitaController::class, 'guardarInforme'])->name('citas.guardarInforme');
 

@@ -1,10 +1,45 @@
-<div class="container my-4">
-    <div class="nav nav-tabs justify-content-center admin-tabs-float" id="adminTabNav" role="tablist">
-        <button class="nav-link admin-btn-nav active" id="tab-citas" data-bs-toggle="tab" data-bs-target="#citas" type="button" role="tab" aria-controls="citas" aria-selected="true">Citas</button>
-        <button class="nav-link admin-btn-nav" id="tab-personal" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="false">Personal</button>
-        <button class="nav-link admin-btn-nav" id="tab-mascotas" data-bs-toggle="tab" data-bs-target="#mascotas" type="button" role="tab" aria-controls="mascotas" aria-selected="false">Mascotas</button>
-    </div>
-
+<div class="container my-4">  
+    <div class="nav nav-tabs justify-content-center admin-tabs-float" id="adminTabNav" role="tablist">  
+        <a href="<?php echo e(url('/admin#citas')); ?>" class="nav-link admin-btn-nav" id="btn-citas" role="tab">Citas</a>  
+        <a href="<?php echo e(url('/admin#personal')); ?>" class="nav-link admin-btn-nav" id="btn-personal" role="tab">Personal</a>  
+        <a href="<?php echo e(url('/admin#mascotas')); ?>" class="nav-link admin-btn-nav" id="btn-mascotas" role="tab">Mascotas</a>  
+    </div>  
+    <script>  
+    document.addEventListener('DOMContentLoaded', function() {  
+        // Forzar hash a #citas si no es válido  
+        var validHashes = ['#citas', '#personal', '#mascotas'];  
+        if (!validHashes.includes(window.location.hash)) {  
+            window.location.hash = '#citas';  
+        }  
+        function activarPestanaAdmin() {  
+            var hash = window.location.hash || '#citas';  
+            document.querySelectorAll('.admin-btn-nav').forEach(btn => btn.classList.remove('active'));  
+            if(hash === '#personal') {  
+                document.getElementById('btn-personal').classList.add('active');  
+            } else if(hash === '#mascotas') {  
+                document.getElementById('btn-mascotas').classList.add('active');  
+            } else {  
+                document.getElementById('btn-citas').classList.add('active');  
+            }  
+            // Mostrar/ocultar secciones  
+            document.querySelectorAll('.admin-tab-section').forEach(sec => sec.style.display = 'none');  
+            var sec = document.querySelector(hash + '-section');  
+            if(sec) sec.style.display = 'block';  
+            // Inicializar calendario si estamos en Citas  
+            if(hash === '#citas') {  
+                if(typeof inicializarCalendarioAdmin === 'function') {  
+                    if(window.adminCalendar) {  
+                        setTimeout(function(){ window.adminCalendar.updateSize(); }, 100);  
+                    } else {  
+                        setTimeout(function(){ inicializarCalendarioAdmin(); }, 100);  
+                    }  
+                }  
+            }  
+        }  
+        activarPestanaAdmin();  
+        window.addEventListener('hashchange', activarPestanaAdmin);  
+    });  
+    </script>  
     <style>
         .admin-tabs-float {
             background: transparent !important;
@@ -56,4 +91,4 @@
             box-shadow: 0 2px 8px #FFA50022;
         }
     </style>
-</div> <?php /**PATH C:\xampp\htdocs\petsvet\resources\views/components/admin-nav.blade.php ENDPATH**/ ?>
+</div><?php /**PATH C:\xampp\htdocs\petsvet\resources\views/components/admin-nav.blade.php ENDPATH**/ ?>

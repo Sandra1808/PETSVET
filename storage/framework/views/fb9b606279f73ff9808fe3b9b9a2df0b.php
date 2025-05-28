@@ -334,8 +334,8 @@
                                             <td><?php echo e($informe->cita->motivo ?? '-'); ?></td>
                                             <td>
                                                 <button type="button" class="btn btn-info btn-sm btn-ver-detalle-informe" data-informe-id="<?php echo e($informe->id); ?>">Ver detalles</button>
-                                                
-                                            </td>
+                                                <a href="<?php echo e(route('pdf.informe', ['id' => $informe->id])); ?>" class="btn btn-secondary btn-sm" target="_blank">Imprimir</a>  
+                                              </td>
                                         </tr>
                                         <tr id="detalle-informe-<?php echo e($informe->id); ?>" style="display:none; background:#FFF7E6;">
                                             <td colspan="3">
@@ -417,16 +417,31 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php $__currentLoopData = $mascota->historiales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $h): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <tr data-historial-id="<?php echo e($h->id); ?>">
-                                        <td><?php echo e($h->created_at->format('d/m/Y H:i')); ?></td>
-                                        <td><?php echo e($h->diagnostico ?? '-'); ?></td>
-                                        <td>
-                                            <button type="button" class="btn btn-primary btn-sm btn-ver-detalle" data-historial-id="<?php echo e($h->id); ?>">Ver detalle</button>
-                                            <a href="<?php echo e(route('pdf.historial.uno', ['id' => $h->id])); ?>" class="btn btn-secondary btn-sm" target="_blank">Imprimir</a>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                  <?php $__currentLoopData = $mascota->historiales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $h): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>  
+                                    <?php $__currentLoopData = $h->informes()->orderByDesc('created_at')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $informe): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>  
+                                    <tr data-informe-id="<?php echo e($informe->id); ?>"  
+                                        data-diagnostico="<?php echo e($informe->diagnostico); ?>"  
+                                        data-procedimientos="<?php echo e($informe->procedimientos); ?>"  
+                                        data-medicamentos="<?php echo e($informe->medicamentos); ?>"  
+                                        data-tratamiento="<?php echo e($informe->tratamiento); ?>"  
+                                        data-recomendaciones="<?php echo e($informe->recomendaciones); ?>"  
+                                        data-observaciones="<?php echo e($informe->observaciones); ?>"  
+                                        data-proxima_cita="<?php echo e($informe->proxima_cita); ?>"  
+                                        data-fecha_cita="<?php echo e($informe->cita->fecha ?? ''); ?>"  
+                                        data-hora_cita="<?php echo e($informe->cita->hora ?? ''); ?>"  
+                                        data-motivo_cita="<?php echo e($informe->cita->motivo ?? ''); ?>"  
+                                        data-veterinario="<?php echo e($informe->cita->veterinario->name ?? ''); ?>"  
+                                        data-ncolegiado="<?php echo e($informe->cita->veterinario->dni ?? ''); ?>"  
+                                    >  
+                                        <td><?php echo e($informe->cita && $informe->cita->fecha ? $informe->cita->fecha : ($informe->created_at ? $informe->created_at->format('d/m/Y H:i') : '-')); ?></td>  
+                                        <td><?php echo e($informe->cita->motivo ?? '-'); ?></td>  
+                                        <td>  
+                                            <button type="button" class="btn btn-primary btn-sm btn-ver-detalle-informe" data-informe-id="<?php echo e($informe->id); ?>">Ver detalle</button>  
+                                            <a href="<?php echo e(route('pdf.informe', ['id' => $informe->id])); ?>" class="btn btn-secondary btn-sm" target="_blank">Imprimir</a>  
+                                        </td>  
+                                    </tr>  
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>  
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                             </table>
                             <div id="detalle-historial-<?php echo e($mascota->id); ?>" class="mt-4" style="display:none;"></div>
@@ -530,91 +545,121 @@ function inicializarCalendarioVet() {
     }
 }
 
-$(document).ready(function() {
-    // Inicializar calendario solo si la sección de citas está visible al cargar
-    if(window.location.hash === '#citas' || window.location.hash === '' || window.location.hash === '#') {
-        inicializarCalendarioVet();
-    }
-    // Al pulsar la pestaña Citas, destruir e inicializar el calendario SIEMPRE
-    $('#btn-citas').on('click', function(e) {
-        setTimeout(function() {
-            if(calendar) {
-                calendar.destroy();
-                calendar = null;
-            }
-            inicializarCalendarioVet();
-        }, 100);
-    });
-    $('.sortable').on('click', function() {
-        var col = $(this).data('col');
-        var table = $(this).parents('table');
-        var rows = table.find('tbody > tr').get();
-        var asc = $(this).hasClass('asc');
-        rows.sort(function(a, b) {
-            var A = $(a).find('td').eq($('.sortable').index($(this))).text().toUpperCase();
-            var B = $(b).find('td').eq($('.sortable').index($(this))).text().toUpperCase();
-            if(A < B) return asc ? 1 : -1;
-            if(A > B) return asc ? -1 : 1;
-            return 0;
-        }.bind(this));
-        $.each(rows, function(index, row) {
-            table.children('tbody').append(row);
-        });
-        $('.sortable').removeClass('asc desc');
-        $(this).addClass(asc ? 'desc' : 'asc');
-    });
-    $('.btn-ver-detalle').on('click', function() {
-        var historialId = $(this).data('historial-id');
-        var mascotaId = $(this).closest('table').attr('id').replace('tabla-historico-', '');
-        var detalleDiv = $('#detalle-historial-' + mascotaId);
-        var historiales = <?php echo json_encode($historiales, 15, 512) ?>;
-        var historial = historiales.find(h => h.id == historialId);
-        if(historial) {
-            var html = `<div class='card'><div class='card-body'>
-                <h6>Detalle del informe</h6>
-                <p><b>Fecha creación:</b> ${historial.created_at}</p>
-                <p><b>Diagnóstico:</b> ${historial.diagnostico ?? '-'}</p>
-                <p><b>Procedimientos:</b> ${historial.procedimientos ?? '-'}</p>
-                <p><b>Medicamentos:</b> ${historial.medicamentos ?? '-'}</p>
-                <p><b>Tratamiento:</b> ${historial.tratamiento ?? '-'}</p>
-                <p><b>Recomendaciones:</b> ${historial.recomendaciones ?? '-'}</p>
-                <p><b>Observaciones:</b> ${historial.observaciones ?? '-'}</p>
-                <p><b>Próxima cita:</b> ${historial.proxima_cita ?? '-'}</p>
-            </div></div>`;
-            detalleDiv.html(html).show();
-        }
-    });
-    // Ocultar el detalle al cerrar el modal
-    $('[id^=modalHistorialMascota]').on('hidden.bs.modal', function () {
-        $(this).find('[id^=detalle-historial-]').hide().html('');
-    });
-    $('.btn-ver-detalle-informe').on('click', function() {
-        var id = $(this).data('informe-id');
-        var fila = $('#detalle-informe-' + id);
-        if(fila.is(':visible')) {
-            fila.hide();
-        } else {
-            $(this).closest('tbody').find('tr[id^="detalle-informe-"]').hide();
-            fila.show();
-        }
-    });
-    // Buscador para historiales
-    $('#input-buscador-historiales').on('keyup', function() {
-        var value = $(this).val().toLowerCase();
-        $('#tabla-historiales-vet tbody tr').filter(function() {
-            $(this).toggle($(this).find('td').eq(0).text().toLowerCase().indexOf(value) > -1 ||
-                           $(this).find('td').eq(2).text().toLowerCase().indexOf(value) > -1);
-        });
-    });
-    
-    // Buscador para mascotas
-    $('#input-buscador-mascotas').on('keyup', function() {
-        var value = $(this).val().toLowerCase();
-        $('#tabla-mascotas-vet tbody tr').filter(function() {
-            $(this).toggle($(this).find('td').eq(0).text().toLowerCase().indexOf(value) > -1 ||
-                           $(this).find('td').eq(2).text().toLowerCase().indexOf(value) > -1);
-        });
-    });
+$(document).ready(function() {  
+    // Inicializar calendario solo si la sección de citas está visible al cargar  
+    if(window.location.hash === '#citas' || window.location.hash === '' || window.location.hash === '#') {  
+        inicializarCalendarioVet();  
+    }  
+    // Al pulsar la pestaña Citas, destruir e inicializar el calendario SIEMPRE  
+    $('#btn-citas').on('click', function(e) {  
+        setTimeout(function() {  
+            if(calendar) {  
+                calendar.destroy();  
+                calendar = null;  
+            }  
+            inicializarCalendarioVet();  
+        }, 100);  
+    });  
+    $('.sortable').on('click', function() {  
+        var col = $(this).data('col');  
+        var table = $(this).parents('table');  
+        var rows = table.find('tbody > tr').get();  
+        var asc = $(this).hasClass('asc');  
+        rows.sort(function(a, b) {  
+            var A = $(a).find('td').eq($('.sortable').index($(this))).text().toUpperCase();  
+            var B = $(b).find('td').eq($('.sortable').index($(this))).text().toUpperCase();  
+            if(A < B) return asc ? 1 : -1;  
+            if(A > B) return asc ? -1 : 1;  
+            return 0;  
+        }.bind(this));  
+        $.each(rows, function(index, row) {  
+            table.children('tbody').append(row);  
+        });  
+        $('.sortable').removeClass('asc desc');  
+        $(this).addClass(asc ? 'desc' : 'asc');  
+    });  
+    $('.btn-ver-detalle').on('click', function() {  
+        var historialId = $(this).data('historial-id');  
+        var mascotaId = $(this).closest('table').attr('id').replace('tabla-historico-', '');  
+        var detalleDiv = $('#detalle-historial-' + mascotaId);  
+        var historiales = <?php echo json_encode($historiales, 15, 512) ?>;  
+        var historial = historiales.find(h => h.id == historialId);  
+        if(historial) {  
+            var html = `<div class='card'><div class='card-body'>  
+                <h6>Detalle del informe</h6>  
+                <p><b>Fecha creación:</b> ${historial.created_at}</p>  
+                <p><b>Diagnóstico:</b> ${historial.diagnostico ?? '-'}</p>  
+                <p><b>Procedimientos:</b> ${historial.procedimientos ?? '-'}</p>  
+                <p><b>Medicamentos:</b> ${historial.medicamentos ?? '-'}</p>  
+                <p><b>Tratamiento:</b> ${historial.tratamiento ?? '-'}</p>  
+                <p><b>Recomendaciones:</b> ${historial.recomendaciones ?? '-'}</p>  
+                <p><b>Observaciones:</b> ${historial.observaciones ?? '-'}</p>  
+                <p><b>Próxima cita:</b> ${historial.proxima_cita ?? '-'}</p>  
+            </div></div>`;  
+            detalleDiv.html(html).show();  
+        }  
+    });  
+      
+    // NUEVO: Manejador para botones de informes con datos en atributos data-*  
+    $(document).on('click', '.btn-ver-detalle-informe', function() {  
+        var fila = $(this).closest('tr');  
+        var fecha = fila.find('td').eq(0).text();  
+        var diagnostico = fila.data('diagnostico');  
+        var procedimientos = fila.data('procedimientos');  
+        var medicamentos = fila.data('medicamentos');  
+        var tratamiento = fila.data('tratamiento');  
+        var recomendaciones = fila.data('recomendaciones');  
+        var observaciones = fila.data('observaciones');  
+        var proxima_cita = fila.data('proxima_cita');  
+        var fecha_cita = fila.data('fecha_cita');  
+        var hora_cita = fila.data('hora_cita');  
+        var motivo_cita = fila.data('motivo_cita');  
+        var veterinario = fila.data('veterinario');  
+        var ncolegiado = fila.data('ncolegiado');  
+          
+        var html = `<div class='card'><div class='card-body'>  
+            <h6>Detalle del informe</h6>  
+            <p><b>Fecha creación:</b> ${fecha}</p>  
+            <p><b>Fecha cita:</b> ${fecha_cita ?? '-'} ${hora_cita ?? ''}</p>  
+            <p><b>Motivo cita:</b> ${motivo_cita ?? '-'}</p>  
+            <p><b>Veterinario:</b> ${veterinario ?? '-'}</p>  
+            <p><b>Nº Colegiado:</b> ${ncolegiado ?? '-'}</p>  
+            <p><b>Diagnóstico:</b> ${diagnostico}</p>  
+            <p><b>Procedimientos:</b> ${procedimientos}</p>  
+            <p><b>Medicamentos:</b> ${medicamentos}</p>  
+            <p><b>Tratamiento:</b> ${tratamiento}</p>  
+            <p><b>Recomendaciones:</b> ${recomendaciones}</p>  
+            <p><b>Observaciones:</b> ${observaciones}</p>  
+            <p><b>Próxima cita:</b> ${proxima_cita}</p>  
+        </div></div>`;  
+          
+        var mascotaId = $(this).closest('table').attr('id').replace('tabla-historico-', '');  
+        var detalleDiv = $('#detalle-historial-' + mascotaId);  
+        detalleDiv.html(html).show();  
+    });  
+      
+    // Ocultar el detalle al cerrar el modal  
+    $('[id^=modalHistorialMascota]').on('hidden.bs.modal', function () {  
+        $(this).find('[id^=detalle-historial-]').hide().html('');  
+    });  
+      
+    // Buscador para historiales  
+    $('#input-buscador-historiales').on('keyup', function() {  
+        var value = $(this).val().toLowerCase();  
+        $('#tabla-historiales-vet tbody tr').filter(function() {  
+            $(this).toggle($(this).find('td').eq(0).text().toLowerCase().indexOf(value) > -1 ||  
+                           $(this).find('td').eq(2).text().toLowerCase().indexOf(value) > -1);  
+        });  
+    });  
+      
+    // Buscador para mascotas  
+    $('#input-buscador-mascotas').on('keyup', function() {  
+        var value = $(this).val().toLowerCase();  
+        $('#tabla-mascotas-vet tbody tr').filter(function() {  
+            $(this).toggle($(this).find('td').eq(0).text().toLowerCase().indexOf(value) > -1 ||  
+                           $(this).find('td').eq(2).text().toLowerCase().indexOf(value) > -1);  
+        });  
+    });  
 });
 </script>
 

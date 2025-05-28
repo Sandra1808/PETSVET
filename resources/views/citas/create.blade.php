@@ -24,6 +24,7 @@
             <option value="Primera consulta">Primera consulta</option>
             <option value="Revisión">Revisión</option>
             <option value="Vacunación">Vacunación</option>
+            <option value="Desparasitación">Desparasitación</option>  
             <option value="Cirugía">Cirugía</option>
             <option value="Pruebas">Pruebas</option>
             <option value="Otros">Otros</option>

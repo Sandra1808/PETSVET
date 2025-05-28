@@ -80,7 +80,7 @@ class CitaController extends Controller
         \App\Models\Cita::create($data);
 
         if ($user->role === 'propietario') {
-            return redirect()->route('citas.index')->with('success', 'Solicitud de cita enviada. Espera confirmación.');
+            return redirect('/home#citas')->with('success', 'Solicitud de cita enviada. Espera confirmación.');
         }
         return redirect()->route('admin')->with('success', 'Cita creada correctamente.');
     }
@@ -107,7 +107,8 @@ class CitaController extends Controller
         $cita = Cita::findOrFail($id);
         $cita->update($request->all());
 
-        return redirect()->route('citas.index')->with('success', 'Cita actualizada correctamente.');
+        // Redirigir al panel de administración, pestaña citas
+        return redirect('/admin#citas')->with('success', 'Cita actualizada correctamente.');
     }
 
     public function destroy($id)
